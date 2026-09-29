@@ -204,7 +204,13 @@
                 </div>
             </div>
 
-            <!-- Data Management Section -->
+            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-6">
+<h2 class="text-lg font-bold text-gray-800 mb-2">ChatGPT Connection</h2>
+<p class="text-sm text-gray-600 mb-3">Send a read-only snapshot of your meals, recipes, and weight records to your private Fitness Connect. Review and save in the new window. Your Gemini key is excluded.</p>
+<button type="button" onclick="syncFitnessConnect()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold">Sync with ChatGPT</button>
+<p class="text-sm text-gray-500 mt-2">Sync after changes to keep ChatGPT up to date. If the window cannot receive records, export a backup below and upload it at <a class="underline" href="https://fitness-connect.reyesjo2453.chatgpt.site" target="_blank" rel="noopener">Fitness Connect</a>.</p>
+</div>
+<!-- Data Management Section -->
             <h2 class="text-lg font-bold mb-4 text-gray-800 mt-8">Data Management</h2>
             <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4 mb-8">
                 <p class="text-xs text-gray-500 mb-2">Your data is securely saved locally on your device. You can manually backup your diary here.</p>
@@ -1646,5 +1652,38 @@
         showNotification("Recipe deleted.");
     }
 </script>
+
+<script>
+// Manual snapshot sync; local data remains the authority for edits.
+function syncFitnessConnect() {
+  const origin = "https://fitness-connect.reyesjo2453.chatgpt.site";
+  const kind = "nutrition";
+  const nonce = crypto.randomUUID();
+  const source = STATE;
+  const allowed = ["entries","weights","recipes","goal","weightGoal","macroTargets"];
+  const data = Object.fromEntries(allowed.filter(key => source[key] !== undefined).map(key => [key, source[key]]));
+  const snapshot = JSON.parse(JSON.stringify(data));
+  const popup = window.open(origin + '/?connect=' + kind + '&nonce=' + encodeURIComponent(nonce), '_blank');
+  if (!popup) {
+    alert('Allow pop-ups to sync, or export a JSON backup and upload it at ' + origin);
+    return;
+  }
+  let timer;
+  function receive(event) {
+    if (event.origin !== origin || event.source !== popup || event.data?.nonce !== nonce) return;
+    if (event.data.type === 'fitness-ready') {
+      popup.postMessage({type: 'fitness-snapshot', kind, nonce, data: snapshot}, origin);
+    }
+    if (event.data.type === 'fitness-synced') {
+      cleanup();
+      alert('Your snapshot is synced for ChatGPT. Sync again after adding or editing records.');
+    }
+  }
+  function cleanup() { window.removeEventListener('message', receive); clearTimeout(timer); }
+  window.addEventListener('message', receive);
+  timer = setTimeout(cleanup, 600000);
+}
+</script>
+
 </body>
 </html>
