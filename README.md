@@ -20,6 +20,14 @@ FitTrack is a mobile-friendly food diary for tracking calories, macros, fiber, b
 
 For AI features, enter a Gemini API key in **Dashboard → Settings & Goals**. Food logging, manual recipes, and goals work without an AI key. Barcode lookup and food search require internet access and depend on the availability of their food databases.
 
+## Get a Gemini API key for the optional AI features
+
+1. Sign in to [Google AI Studio's API Keys page](https://aistudio.google.com/api-keys) with a Google account and accept the terms if prompted.
+2. Copy the key shown for your default project, or select **Create API key** and copy the new key. Google's [API key guide](https://ai.google.dev/gemini-api/docs/api-key) has the current steps.
+3. In FitTrack, open **Dashboard → Settings & Goals**, paste the key into **Gemini API Key**, and leave the field to save it. Then try describing a meal or adding recipe ingredients with AI.
+
+Google offers a [free Gemini API tier](https://ai.google.dev/gemini-api/docs/pricing) for supported models, subject to usage limits. Check that your project is on the **Free** plan in AI Studio before using the key; enabling billing or switching to a paid project can incur charges. Keep the key private. FitTrack stores it in this browser and includes it in exported backups, so do not share those backups or paste the key into your repository. This browser-based app sends requests directly to Google's API; use a separate, restricted key for personal use and avoid entering a sensitive or paid-project key on a shared device.
+
 ## Data and accuracy
 
 Your diary, recipes, goals, weight records, and Gemini API key are stored in this browser's local storage. They do not automatically sync across devices. Export a backup regularly, especially before clearing browser data or changing devices. **The exported JSON includes your API key**, so keep backup files private.
