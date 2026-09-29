@@ -37,3 +37,9 @@ Nutrition returned by AI or public food databases may be incomplete or inaccurat
 ## About the app
 
 FitTrack is a single-page HTML app in `index.html`. It uses browser storage rather than an account or server. Its interface loads Tailwind CSS, Chart.js, Font Awesome, and the html5-qrcode scanner from CDNs. Food lookup uses Open Food Facts and the USDA FoodData Central search API; optional AI requests go to Google's Gemini API using the key entered in the app.
+
+## ChatGPT connection (optional)
+
+Use **Sync with ChatGPT** in the app's settings to send a snapshot to [Fitness Connect](https://fitness-connect.reyesjo2453.chatgpt.site). Sign in, review the incoming record counts, and select **Save synced records**. If the new window cannot receive the records, export a JSON backup from this app and upload it at Fitness Connect instead.
+
+Install and connect the personal **Fitness Connect** plugin in ChatGPT to read your synced records. The connection supports nutrition summaries, meals, recipes, weight history, completed workouts, personal records, and recovery estimates. It cannot modify your app records. Sync again after changes; ChatGPT reads the last synced copy. Only the owner's account can access this personal connection, and Gemini API keys are excluded from stored snapshots.
