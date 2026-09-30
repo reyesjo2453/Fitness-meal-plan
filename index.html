@@ -408,8 +408,15 @@
                 <input type="number" id="recServings" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" value="1" min="1" oninput="updateRecipePreview()">
             </div>
             
+            <div class="mb-4 rounded-lg border border-green-200 bg-green-50 p-3">
+                <label class="block text-xs font-bold text-green-800 uppercase mb-1">Enter ingredients manually</label>
+                <p class="text-xs text-green-700 mb-2">No AI key needed. Add each ingredient, then enter the amount used and nutrition for that amount.</p>
+                <button type="button" onclick="addManualRecipeIngredient()" class="w-full bg-green-700 text-white py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-green-800 transition"><i class="fas fa-plus mr-1"></i> Add Ingredient Manually</button>
+            </div>
+
             <div class="mb-4 bg-purple-50 p-3 rounded-lg border border-purple-100 shadow-sm">
-                <label class="block text-xs font-bold text-purple-700 uppercase mb-1"><i class="fas fa-sparkles"></i> Add ingredients with AI</label>
+                <label class="block text-xs font-bold text-purple-700 uppercase mb-1"><i class="fas fa-sparkles"></i> Optional AI ingredient helper</label>
+                <p class="text-xs text-purple-700 mb-2">Requires a Gemini API key. Manual ingredient entry works without one.</p>
                 <textarea id="recIngredients" class="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-purple-500" rows="3" placeholder="e.g. 1 lb ground turkey, 2 tbsp olive oil, 1 onion. Add more later, too."></textarea>
                 <button type="button" id="aiRecipeBtn" onclick="calculateRecipeAI()" class="mt-2 w-full bg-purple-600 text-white py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-purple-700 transition"><i class="fas fa-magic mr-1"></i> Add AI Ingredients</button>
             </div>
@@ -1503,6 +1510,22 @@
             </div>`).join('') : '<p class="text-xs text-gray-500 mb-4">Add ingredients with AI or a barcode. You can also enter batch totals manually below.</p>';
     }
 
+    window.addManualRecipeIngredient = function() {
+        recipeIngredients.push({
+            name: '',
+            amount: '',
+            source: 'manual',
+            calories: 0,
+            carbs: 0,
+            protein: 0,
+            fat: 0,
+            fiber: 0
+        });
+        renderRecipeIngredients();
+        const nameInputs = document.querySelectorAll('#recipeIngredientList input[aria-label="Ingredient name"]');
+        nameInputs[nameInputs.length - 1]?.focus();
+    }
+
     window.editRecipeIngredient = function(index, field, value) {
         if (!recipeIngredients[index]) return;
         const item = recipeIngredients[index];
@@ -1596,6 +1619,10 @@
         const fib = parseInt(document.getElementById('recFib').value) || 0;
 
         if (!name) { showNotification("Please enter a recipe name."); return; }
+        if (recipeIngredients.some(item => !String(item.name || '').trim())) {
+            showNotification("Name each ingredient or remove its blank row.");
+            return;
+        }
         if (cals === 0 && carbs === 0 && pro === 0) { showNotification("Please calculate or enter macros."); return; }
 
         const newRecipe = {
