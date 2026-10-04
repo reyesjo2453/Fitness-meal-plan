@@ -227,6 +227,81 @@
             
         </div>
 
+
+        <!-- TAB 3: MEAL PLANNER -->
+        <div id="view-plan" class="hidden p-4 bg-gray-50 min-h-[calc(100vh-140px)] space-y-4">
+            <div>
+                <h2 class="text-lg font-bold text-gray-800">Meal Planner</h2>
+                <p class="text-sm text-gray-500">Use today’s logged protein and your saved recipes to plan meals and build a shopping list.</p>
+            </div>
+
+            <section class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                <div class="flex justify-between items-start gap-3">
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-700">Protein today</h3>
+                        <p id="plannerProteinSummary" class="text-sm text-gray-500 mt-1">Loading from your diary…</p>
+                    </div>
+                    <span id="plannerProteinRemaining" class="shrink-0 rounded-full bg-purple-50 text-purple-700 px-3 py-1 text-sm font-bold">— g left</span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-2 mt-3"><div id="plannerProteinBar" class="bg-purple-500 h-2 rounded-full transition-all" style="width:0%"></div></div>
+                <p id="plannerProteinDate" class="text-xs text-gray-400 mt-2"></p>
+            </section>
+
+            <section class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                <div class="flex justify-between items-center mb-3">
+                    <div>
+                        <h3 class="font-bold text-gray-800">Recipe suggestions</h3>
+                        <p class="text-xs text-gray-500">Ranked by how well one serving fits your remaining protein.</p>
+                    </div>
+                </div>
+                <div id="recipeSuggestions" class="space-y-2"></div>
+            </section>
+
+            <section class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                <h3 class="font-bold text-gray-800 mb-1">Add a meal to this week</h3>
+                <p class="text-xs text-gray-500 mb-3">Planned meals do not enter your diary until you log them.</p>
+                <form id="planMealForm" onsubmit="addPlannedMeal(event)" class="space-y-3">
+                    <label class="block text-xs font-semibold text-gray-600">Saved recipe
+                        <select id="planRecipe" required class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 bg-white"></select>
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="block text-xs font-semibold text-gray-600">Date
+                            <input type="date" id="planDate" required class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2">
+                        </label>
+                        <label class="block text-xs font-semibold text-gray-600">Servings
+                            <input type="number" id="planServings" min="0.25" max="50" step="0.25" value="1" required class="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2">
+                        </label>
+                    </div>
+                    <button id="addPlannedMealButton" type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-semibold">Add to weekly plan</button>
+                </form>
+            </section>
+
+            <section class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                <div class="flex justify-between items-center gap-2 mb-3">
+                    <div>
+                        <h3 class="font-bold text-gray-800">Your week</h3>
+                        <p id="plannerWeekLabel" class="text-xs text-gray-500"></p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="shiftPlannerWeek(-1)" aria-label="Previous week" class="w-9 h-9 rounded-lg border border-gray-200 text-gray-600"><i class="fas fa-chevron-left"></i></button>
+                        <button type="button" onclick="shiftPlannerWeek(1)" aria-label="Next week" class="w-9 h-9 rounded-lg border border-gray-200 text-gray-600"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div id="weeklyMealPlan" class="space-y-3"></div>
+            </section>
+
+            <section class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-8">
+                <div class="flex justify-between items-center gap-2 mb-2">
+                    <div>
+                        <h3 class="font-bold text-gray-800">Weekly grocery list</h3>
+                        <p class="text-xs text-gray-500">Ingredients are scaled to the servings you planned.</p>
+                    </div>
+                    <button type="button" onclick="copyGroceryList()" class="shrink-0 text-xs font-semibold text-blue-700 bg-blue-50 px-3 py-2 rounded-lg">Copy list</button>
+                </div>
+                <div id="weeklyGroceryList" class="text-sm text-gray-700"></div>
+            </section>
+        </div>
+
     </main>
 
     <!-- Bottom Navigation -->
@@ -238,6 +313,10 @@
         <button onclick="switchTab('progress')" id="nav-progress" class="flex-1 py-3 text-gray-400 hover:text-blue-600 flex flex-col items-center">
             <i class="fas fa-chart-pie mb-1 text-lg"></i>
             <span class="text-[10px] font-medium uppercase tracking-wide">Dashboard</span>
+        </button>
+        <button onclick="switchTab('plan')" id="nav-plan" class="flex-1 py-3 text-gray-400 hover:text-blue-600 flex flex-col items-center">
+            <i class="fas fa-calendar-check mb-1 text-lg"></i>
+            <span class="text-[10px] font-medium uppercase tracking-wide">Meal Plan</span>
         </button>
     </nav>
 
@@ -491,6 +570,7 @@
         entries: [],
         weights: [],
         recipes: [],
+        plannedMeals: [],
         apiKey: ''
     };
 
@@ -515,6 +595,7 @@
                 STATE.entries = parsed.entries || [];
                 STATE.weights = parsed.weights || [];
                 STATE.recipes = parsed.recipes || [];
+                STATE.plannedMeals = Array.isArray(parsed.plannedMeals) ? parsed.plannedMeals : [];
                 STATE.apiKey = parsed.apiKey || '';
             }
         } catch (e) {
@@ -648,13 +729,16 @@
     window.switchTab = function(tabId) {
         document.getElementById('view-diary').classList.add('hidden');
         document.getElementById('view-progress').classList.add('hidden');
+        document.getElementById('view-plan').classList.add('hidden');
         document.getElementById('nav-diary').classList.replace('text-blue-600', 'text-gray-400');
         document.getElementById('nav-progress').classList.replace('text-blue-600', 'text-gray-400');
+        document.getElementById('nav-plan').classList.replace('text-blue-600', 'text-gray-400');
 
         document.getElementById(`view-${tabId}`).classList.remove('hidden');
         document.getElementById(`nav-${tabId}`).classList.replace('text-gray-400', 'text-blue-600');
         
         if(tabId === 'progress') window.updateChart();
+        if(tabId === 'plan') renderMealPlanner();
         window.scrollTo(0, 0);
     }
 
@@ -674,6 +758,7 @@
         
         updateDashboard();
         renderDiary();
+        renderMealPlanner();
     }
 
     function updateDashboard() {
@@ -1266,7 +1351,7 @@
     window.exportData = function() {
         const dataToExport = {
             goal: STATE.goal, weightGoal: STATE.weightGoal, macroTargets: STATE.macroTargets,
-            entries: STATE.entries, weights: STATE.weights, recipes: STATE.recipes, apiKey: STATE.apiKey
+            entries: STATE.entries, weights: STATE.weights, recipes: STATE.recipes, plannedMeals: STATE.plannedMeals || [], apiKey: STATE.apiKey
         };
         const dataStr = JSON.stringify(dataToExport, null, 2);
         const blob = new Blob([dataStr], { type: "application/json" });
@@ -1406,12 +1491,142 @@
         progressChart.update();
     }
 
+    // --- Meal planning from logged protein and saved recipes ---
+    let plannerWeekOffset = 0;
+    let currentGroceryText = '';
+    const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const dateFromKey = value => { const [y,m,d] = value.split('-').map(Number); return new Date(y,m-1,d); };
+    const keyFromDate = value => `${value.getFullYear()}-${String(value.getMonth()+1).padStart(2,'0')}-${String(value.getDate()).padStart(2,'0')}`;
+    function plannerWeekDates() {
+        const anchor = dateFromKey(STATE.currentDate || getTodayString());
+        anchor.setDate(anchor.getDate() - anchor.getDay() + plannerWeekOffset * 7);
+        return Array.from({length:7}, (_,i) => { const d = new Date(anchor); d.setDate(anchor.getDate()+i); return keyFromDate(d); });
+    }
+    function proteinForDate(date) {
+        return (STATE.entries || []).filter(e => e.date === date).reduce((sum,e) => sum + (Number(e.protein)||0), 0);
+    }
+    function proteinPerServing(recipe) {
+        return Number(recipe?.protein || 0) / Math.max(1, Number(recipe?.servings)||1);
+    }
+    function updatePlannerProtein() {
+        const date = STATE.currentDate || getTodayString();
+        const eaten = proteinForDate(date), target = Number(STATE.macroTargets?.protein)||0;
+        const remaining = Math.max(0,target-eaten), over = Math.max(0,eaten-target);
+        const summary = document.getElementById('plannerProteinSummary');
+        const badge = document.getElementById('plannerProteinRemaining');
+        const bar = document.getElementById('plannerProteinBar');
+        const dateLabel = document.getElementById('plannerProteinDate');
+        if(summary) summary.textContent = `${Math.round(eaten)} g logged toward your ${target} g daily target`;
+        if(badge) badge.textContent = over ? `${Math.round(over)} g over` : `${Math.round(remaining)} g left`;
+        if(bar) bar.style.width = `${target ? Math.min(eaten/target*100,100) : 0}%`;
+        if(dateLabel) dateLabel.textContent = new Date(date+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'});
+        return {eaten,target,remaining,over};
+    }
+    function renderRecipeSuggestions(remaining) {
+        const container = document.getElementById('recipeSuggestions');
+        const recipes = (STATE.recipes||[]).filter(r => proteinPerServing(r)>0).map(recipe => ({recipe,protein:proteinPerServing(recipe)}));
+        if(!container) return;
+        if(!recipes.length) { container.innerHTML='<p class="text-sm text-gray-500 py-2">Save a recipe with protein information to get meal suggestions here.</p>'; return; }
+        recipes.sort((a,b) => {
+            const aFit=a.protein<=remaining?0:1,bFit=b.protein<=remaining?0:1;
+            return aFit-bFit || (aFit===0?b.protein-a.protein:a.protein-b.protein);
+        });
+        const note = remaining<=0 ? '<p class="text-xs text-green-700 bg-green-50 rounded-lg p-2">Your protein goal is met for this date. Here are your saved protein-rich recipes.</p>' : '';
+        container.innerHTML=note+recipes.slice(0,5).map(({recipe,protein})=>{
+            const calories=Number(recipe.calories||0)/Math.max(1,Number(recipe.servings)||1);
+            const planned = Math.min(50,Math.max(0.25,Math.ceil(remaining/Math.max(protein,1))));
+            return `<article class="flex items-center justify-between gap-3 border border-gray-100 rounded-lg p-3"><div class="min-w-0"><p class="font-semibold text-sm text-gray-800 truncate">${escapeHTML(recipe.name)}</p><p class="text-xs text-gray-500">${Math.round(protein)} g protein · ${Math.round(calories)} kcal per serving</p></div><button type="button" onclick="addSuggestedRecipe('${escapeHTML(recipe.id)}',${planned})" class="shrink-0 text-xs font-semibold text-blue-700 bg-blue-50 px-3 py-2 rounded-lg">Plan ${planned} serving${planned===1?'':'s'}</button></article>`;
+        }).join('');
+    }
+    function addMealToPlan(recipeId,date,servings) {
+        const recipe=(STATE.recipes||[]).find(r=>String(r.id)===String(recipeId));
+        if(!recipe||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(servings)||servings<=0) return false;
+        STATE.plannedMeals=Array.isArray(STATE.plannedMeals)?STATE.plannedMeals:[];
+        STATE.plannedMeals.push({id:'plan_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),date,recipeId:String(recipe.id),servings});
+        saveLocalState();
+        return true;
+    }
+    window.addPlannedMeal = function(event) {
+        event.preventDefault();
+        const ok=addMealToPlan(document.getElementById('planRecipe').value,document.getElementById('planDate').value,Number(document.getElementById('planServings').value));
+        if(!ok) return showNotification('Choose a saved recipe, a date, and a valid serving amount.');
+        showNotification('Meal added to your weekly plan.','success');
+        renderMealPlanner();
+    }
+    window.addSuggestedRecipe = function(recipeId,servings) {
+        if(!addMealToPlan(recipeId,STATE.currentDate||getTodayString(),Number(servings))) return showNotification('Could not add that recipe to the plan.');
+        showNotification('Recipe planned for this date.','success');
+        renderMealPlanner();
+    }
+    window.removePlannedMeal = function(id) {
+        STATE.plannedMeals=(STATE.plannedMeals||[]).filter(item=>item.id!==id);
+        saveLocalState(); renderMealPlanner();
+    }
+    window.shiftPlannerWeek = function(offset) { plannerWeekOffset+=Number(offset)||0; renderMealPlanner(); }
+    function parseGroceryAmount(ingredient,scale) {
+        const text=String(ingredient.amount||'').trim();
+        const match=text.match(/^((?:\d+\s*\/\s*\d+)|(?:\d+(?:\.\d+)?))\s*(g|grams?|kg|kilograms?|lb|lbs|pounds?|oz|ounces?|ml|l|liters?|litres?|cups?|tbsp|tablespoons?|tsp|teaspoons?|cloves?|slices?|pieces?|pcs|cans?|packages?|packets?)?\b/i);
+        if(match){let amount=match[1].includes('/')?match[1].split('/').map(Number).reduce((a,b)=>a/b):Number(match[1]);let unit=(match[2]||'').toLowerCase();const aliases={grams:'g',gram:'g',kilogram:'kg',kilograms:'kg',pound:'lb',pounds:'lb',lbs:'lb',ounce:'oz',ounces:'oz',liter:'l',liters:'l',litre:'l',litres:'l',cup:'cup',cups:'cup',tablespoon:'tbsp',tablespoons:'tbsp',teaspoon:'tsp',teaspoons:'tsp',clove:'clove',cloves:'clove',slice:'slice',slices:'slice',piece:'piece',pieces:'piece',pcs:'piece',can:'can',cans:'can',package:'package',packages:'package',packet:'packet',packets:'packet'};unit=aliases[unit]||unit;return {amount:amount*scale,unit};}
+        if(Number.isFinite(Number(ingredient.grams))&&Number(ingredient.grams)>0) return {amount:Number(ingredient.grams)*scale,unit:'g'};
+        return null;
+    }
+    function groceryRows(meals) {
+        const combined=new Map(),notes=[];
+        for(const planned of meals){
+            const recipe=(STATE.recipes||[]).find(r=>String(r.id)===String(planned.recipeId));
+            if(!recipe) continue;
+            const factor=Number(planned.servings)/Math.max(1,Number(recipe.servings)||1);
+            const ingredients=Array.isArray(recipe.ingredients)?recipe.ingredients:[];
+            if(!ingredients.length){notes.push(`${recipe.name} — ${planned.servings} serving${planned.servings===1?'':'s'} (no ingredient list saved)`);continue;}
+            for(const ingredient of ingredients){
+                const name=String(ingredient.name||'').trim(); if(!name) continue;
+                const parsed=parseGroceryAmount(ingredient,factor),key=name.toLowerCase()+'|'+(parsed?.unit||'');
+                if(!parsed){notes.push(`${name}${ingredient.amount?' — '+ingredient.amount:''} (for ${recipe.name})`);continue;}
+                const row=combined.get(key)||{name,amount:0,unit:parsed.unit};row.amount+=parsed.amount;combined.set(key,row);
+            }
+        }
+        const rows=[...combined.values()].sort((a,b)=>a.name.localeCompare(b.name)).map(row=>`${Number(row.amount.toFixed(2))}${row.unit?' '+row.unit:''} ${row.name}`);
+        return [...rows,...notes.map(note=>'Check amount: '+note)];
+    }
+    function renderMealPlanner() {
+        if(!document.getElementById('view-plan')) return;
+        const {remaining}=updatePlannerProtein();
+        renderRecipeSuggestions(remaining);
+        const select=document.getElementById('planRecipe'),dateInput=document.getElementById('planDate');
+        const priorDate=dateInput?.value;
+        if(select){
+            const recipes=STATE.recipes||[];
+            select.innerHTML=recipes.length?recipes.map(r=>`<option value="${escapeHTML(r.id)}">${escapeHTML(r.name)} · ${Math.round(proteinPerServing(r))} g protein/serving</option>`).join(''):'<option value="">No saved recipes yet</option>';
+            select.disabled=!recipes.length;
+            document.getElementById('addPlannedMealButton').disabled=!recipes.length;
+            document.getElementById('addPlannedMealButton').classList.toggle('opacity-50',!recipes.length);
+        }
+        if(dateInput&&!priorDate) dateInput.value=STATE.currentDate||getTodayString();
+        const dates=plannerWeekDates(),start=new Date(dates[0]+'T00:00:00'),end=new Date(dates[6]+'T00:00:00');
+        document.getElementById('plannerWeekLabel').textContent=`${start.toLocaleDateString(undefined,{month:'short',day:'numeric'})} – ${end.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}`;
+        const meals=(STATE.plannedMeals||[]).filter(m=>dates.includes(m.date)).sort((a,b)=>a.date.localeCompare(b.date));
+        document.getElementById('weeklyMealPlan').innerHTML=dates.map(date=>{
+            const dayMeals=meals.filter(m=>m.date===date),label=new Date(date+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'});
+            const content=dayMeals.length?dayMeals.map(meal=>{const recipe=(STATE.recipes||[]).find(r=>String(r.id)===String(meal.recipeId));const name=recipe?.name||'Saved recipe unavailable';const protein=recipe?proteinPerServing(recipe)*meal.servings:0;return `<div class="flex justify-between items-center gap-2 py-2 border-t border-gray-100"><div class="min-w-0"><p class="text-sm font-medium text-gray-800 truncate">${escapeHTML(name)} · ${meal.servings} serving${meal.servings===1?'':'s'}</p><p class="text-xs text-gray-500">${Math.round(protein)} g protein planned</p></div><button type="button" aria-label="Remove ${escapeHTML(name)}" onclick="removePlannedMeal('${escapeHTML(meal.id)}')" class="text-gray-400 hover:text-red-600 px-2 py-1"><i class="fas fa-times"></i></button></div>`}).join(''):'<p class="text-xs text-gray-400 py-2">No meals planned</p>';
+            return `<article class="rounded-lg bg-gray-50 px-3 py-2"><h4 class="text-xs font-bold uppercase tracking-wide text-gray-600">${label}</h4>${content}</article>`;
+        }).join('');
+        const items=groceryRows(meals);currentGroceryText=items.join('\n');
+        const grocery=document.getElementById('weeklyGroceryList');
+        grocery.innerHTML=items.length?`<ul class="space-y-1">${items.map(item=>`<li class="flex gap-2"><span class="text-blue-500">•</span><span>${escapeHTML(item)}</span></li>`).join('')}</ul>`:'<p class="text-sm text-gray-500">Plan recipes for the week to build your grocery list. Recipes without saved ingredients will be noted.</p>';
+    }
+    window.copyGroceryList = async function() {
+        if(!currentGroceryText) return showNotification('Plan meals with saved recipes first.');
+        try { await navigator.clipboard.writeText(currentGroceryText); showNotification('Grocery list copied.','success'); }
+        catch { showNotification('Clipboard access is unavailable in this browser.'); }
+    }
+
     // Start App
     window.addEventListener('DOMContentLoaded', () => {
         initChart();
         loadLocalState(); // Load saved local data
         updateDashboard();
         renderDiary();
+        renderMealPlanner();
     });
 
     // --- Recipe Management ---
@@ -1638,6 +1853,7 @@
         showNotification("Recipe saved successfully!", "success");
         document.getElementById('createRecipeForm').classList.add('hidden');
         renderRecipesList();
+        renderMealPlanner();
     }
 
     window.selectRecipeToLog = function(id) {
@@ -1676,6 +1892,7 @@
         STATE.recipes = STATE.recipes.filter(r => r.id !== id);
         saveLocalState();
         renderRecipesList();
+        renderMealPlanner();
         showNotification("Recipe deleted.");
     }
 </script>
@@ -1687,7 +1904,7 @@ function syncFitnessConnect() {
   const kind = "nutrition";
   const nonce = crypto.randomUUID();
   const source = STATE;
-  const allowed = ["entries","weights","recipes","goal","weightGoal","macroTargets"];
+  const allowed = ["entries","weights","recipes","plannedMeals","goal","weightGoal","macroTargets"];
   const data = Object.fromEntries(allowed.filter(key => source[key] !== undefined).map(key => [key, source[key]]));
   const snapshot = JSON.parse(JSON.stringify(data));
   const popup = window.open(origin + '/?connect=' + kind + '&nonce=' + encodeURIComponent(nonce), '_blank');
