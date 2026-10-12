@@ -67,16 +67,17 @@
     <main id="mainContent">
         
         <!-- TAB 1: DIARY -->
-        <div id="view-diary" class="block">
+        <div id="view-diary" class="hidden">
             <!-- Diary Sections -->
             <div id="diarySections" class="p-3 space-y-3 bg-gray-100 min-h-[calc(100vh-140px)]">
                 <!-- Dynamically populated by JS -->
             </div>
         </div>
 
-        <!-- TAB 2: PROGRESS & DASHBOARD -->
-        <div id="view-progress" class="hidden p-4 bg-gray-50 min-h-[calc(100vh-140px)]">
-            <h2 class="text-lg font-bold mb-4 text-gray-800">Daily Dashboard</h2>
+        <!-- TODAY: calorie and macro overview -->
+        <div id="view-today" class="p-4 bg-gray-50 min-h-[calc(100vh-140px)]">
+            <h2 class="text-lg font-bold mb-1 text-gray-800">Today</h2>
+            <p class="text-sm text-gray-500 mb-4">Your daily calories and nutrition at a glance.</p>
             
             <!-- Dashboard Component -->
             <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm mb-6">
@@ -142,7 +143,13 @@
                 </div>
             </div>
 
-            <h2 class="text-lg font-bold mb-4 text-gray-800">Your Progress</h2>
+            <div class="grid grid-cols-2 gap-2 mb-6"><button type="button" onclick="openAddModal('Lunch')" class="rounded-xl bg-blue-600 px-3 py-3 text-sm font-bold text-white shadow-sm"><i class="fas fa-plus mr-1"></i>Log food</button><button type="button" onclick="switchTab('diary')" class="rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700">Open food diary</button></div>
+        </div>
+
+        <!-- Progress, goals, and settings -->
+        <div id="view-progress" class="hidden p-4 bg-gray-50 min-h-[calc(100vh-140px)]">
+            <h2 class="text-lg font-bold mb-1 text-gray-800">Your Progress</h2>
+            <p class="text-sm text-gray-500 mb-4">Review nutrition trends, weight, and goals.</p>
             
             <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-6">
                 <div class="flex justify-between items-center mb-4">
@@ -156,7 +163,9 @@
                     </select>
                     <select id="chartTimeframe" onchange="updateChart()" class="text-sm bg-gray-50 border border-gray-200 rounded px-2 py-1">
                         <option value="7">Last 7 Days</option>
-                        <option value="14" selected>Last 14 Days</option>
+                        <option value="14">Last 14 Days</option>
+                        <option value="30" selected>Last 30 Days</option>
+                        <option value="90">Last 90 Days</option>
                     </select>
                 </div>
                 <div class="relative h-[250px] w-full">
@@ -305,19 +314,11 @@
     </main>
 
     <!-- Bottom Navigation -->
-    <nav class="fixed bottom-0 w-full max-w-[480px] bg-white border-t border-gray-200 flex justify-around items-center pb-safe z-30">
-        <button onclick="switchTab('diary')" id="nav-diary" class="flex-1 py-3 text-blue-600 flex flex-col items-center">
-            <i class="fas fa-book mb-1 text-lg"></i>
-            <span class="text-[10px] font-medium uppercase tracking-wide">Diary</span>
-        </button>
-        <button onclick="switchTab('progress')" id="nav-progress" class="flex-1 py-3 text-gray-400 hover:text-blue-600 flex flex-col items-center">
-            <i class="fas fa-chart-pie mb-1 text-lg"></i>
-            <span class="text-[10px] font-medium uppercase tracking-wide">Dashboard</span>
-        </button>
-        <button onclick="switchTab('plan')" id="nav-plan" class="flex-1 py-3 text-gray-400 hover:text-blue-600 flex flex-col items-center">
-            <i class="fas fa-calendar-check mb-1 text-lg"></i>
-            <span class="text-[10px] font-medium uppercase tracking-wide">Meal Plan</span>
-        </button>
+    <nav aria-label="Main navigation" class="fixed bottom-0 w-full max-w-[480px] bg-white border-t border-gray-200 flex justify-around items-center pb-safe z-30">
+        <button onclick="switchTab('today')" id="nav-today" aria-current="page" class="flex-1 py-3 text-blue-600 flex flex-col items-center"><i class="fas fa-house mb-1 text-lg"></i><span class="text-[10px] font-medium uppercase tracking-wide">Today</span></button>
+        <button onclick="switchTab('diary')" id="nav-diary" class="flex-1 py-3 text-gray-400 hover:text-blue-600 flex flex-col items-center"><i class="fas fa-book mb-1 text-lg"></i><span class="text-[10px] font-medium uppercase tracking-wide">Diary</span></button>
+        <button onclick="switchTab('plan')" id="nav-plan" class="flex-1 py-3 text-gray-400 hover:text-blue-600 flex flex-col items-center"><i class="fas fa-calendar-check mb-1 text-lg"></i><span class="text-[10px] font-medium uppercase tracking-wide">Plan</span></button>
+        <button onclick="switchTab('progress')" id="nav-progress" class="flex-1 py-3 text-gray-400 hover:text-blue-600 flex flex-col items-center"><i class="fas fa-chart-line mb-1 text-lg"></i><span class="text-[10px] font-medium uppercase tracking-wide">Progress</span></button>
     </nav>
 
 </div>
@@ -580,6 +581,7 @@
     let html5QrcodeScanner = null;
     let recipeScanner = null;
     let recipeIngredients = [];
+    let editingRecipeId = null;
     let foodContext = { calPerGram: 0, carbPerGram: 0, proPerGram: 0, fatPerGram: 0, fibPerGram: 0, servingWeightGrams: 100 };
     let clipboardEntry = null;
 
@@ -727,10 +729,12 @@
 
     // --- Navigation & Date ---
     window.switchTab = function(tabId) {
+        document.getElementById('view-today').classList.add('hidden');
         document.getElementById('view-diary').classList.add('hidden');
         document.getElementById('view-progress').classList.add('hidden');
         document.getElementById('view-plan').classList.add('hidden');
         document.getElementById('nav-diary').classList.replace('text-blue-600', 'text-gray-400');
+        document.getElementById('nav-today').classList.replace('text-blue-600', 'text-gray-400');
         document.getElementById('nav-progress').classList.replace('text-blue-600', 'text-gray-400');
         document.getElementById('nav-plan').classList.replace('text-blue-600', 'text-gray-400');
 
@@ -1655,18 +1659,23 @@
             const fatPer = Math.round(r.fat / r.servings);
             
             return `
-            <div class="bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm flex justify-between items-center cursor-pointer hover:bg-green-50 transition" onclick="selectRecipeToLog('${r.id}')">
-                <div class="flex-1 pr-3">
+            <article class="bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm hover:bg-green-50 transition">
+                <button type="button" class="w-full text-left" onclick="selectRecipeToLog('${r.id}')" aria-label="Log one serving of ${r.name}">
                     <div class="font-bold text-gray-800 text-sm">${r.name}</div>
                     <div class="text-[11px] text-gray-500 mt-0.5">${calsPer} kcal | P: ${proPer}g | C: ${carbsPer}g | F: ${fatPer}g (Per Serving)</div>
+                </button>
+                <div class="mt-2 flex justify-end gap-2 border-t border-gray-100 pt-2">
+                    <button type="button" onclick="copyRecipe(event, '${r.id}')" class="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">Copy</button>
+                    <button type="button" onclick="editRecipe(event, '${r.id}')" class="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700">Edit</button>
+                    <button type="button" onclick="deleteRecipe(event, '${r.id}')" class="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600">Delete</button>
                 </div>
-                <button onclick="deleteRecipe(event, '${r.id}')" class="text-red-400 hover:text-red-600 p-2 bg-red-50 rounded-lg"><i class="fas fa-trash"></i></button>
-            </div>
+            </article>
             `;
         }).join('');
     }
 
     window.showCreateRecipeForm = function() {
+        editingRecipeId = null;
         document.getElementById('createRecipeForm').classList.remove('hidden');
         recipeIngredients = [];
         renderRecipeIngredients();
@@ -1684,6 +1693,40 @@
             document.getElementById('createRecipeForm').scrollIntoView({ behavior: 'smooth', block: 'end' });
         }, 100);
     }
+
+    window.editRecipe = function(event, id) {
+        event?.stopPropagation();
+        const recipe = STATE.recipes.find(r => String(r.id) === String(id));
+        if (!recipe) return;
+        editingRecipeId = recipe.id;
+        document.getElementById('createRecipeForm').classList.remove('hidden');
+        document.getElementById('recName').value = recipe.name || '';
+        document.getElementById('recServings').value = recipe.servings || 1;
+        document.getElementById('recIngredients').value = '';
+        document.getElementById('recCals').value = Number(recipe.calories) || 0;
+        document.getElementById('recCarbs').value = Number(recipe.carbs) || 0;
+        document.getElementById('recPro').value = Number(recipe.protein) || 0;
+        document.getElementById('recFat').value = Number(recipe.fat) || 0;
+        document.getElementById('recFib').value = Number(recipe.fiber) || 0;
+        recipeIngredients = (recipe.ingredients || []).map(item => ({ ...item }));
+        renderRecipeIngredients(); updateRecipePreview();
+        setTimeout(() => document.getElementById('createRecipeForm').scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
+    };
+    window.copyRecipe = function(event, id) {
+        event?.stopPropagation();
+        const recipe = STATE.recipes.find(r => String(r.id) === String(id));
+        if (!recipe) return;
+        window.showCreateRecipeForm();
+        document.getElementById('recName').value = `${recipe.name} (copy)`;
+        document.getElementById('recServings').value = recipe.servings || 1;
+        document.getElementById('recCals').value = Number(recipe.calories) || 0;
+        document.getElementById('recCarbs').value = Number(recipe.carbs) || 0;
+        document.getElementById('recPro').value = Number(recipe.protein) || 0;
+        document.getElementById('recFat').value = Number(recipe.fat) || 0;
+        document.getElementById('recFib').value = Number(recipe.fiber) || 0;
+        recipeIngredients = (recipe.ingredients || []).map(item => ({ ...item }));
+        renderRecipeIngredients(); updateRecipePreview();
+    };
 
     window.updateRecipePreview = function() {
         const servings = parseInt(document.getElementById('recServings').value) || 1;
@@ -1840,18 +1883,20 @@
         }
         if (cals === 0 && carbs === 0 && pro === 0) { showNotification("Please calculate or enter macros."); return; }
 
-        const newRecipe = {
-            id: 'rec_' + Date.now().toString(),
-            name, servings, calories: cals, carbs, protein: pro, fat, fiber: fib,
-            ingredients: recipeIngredients.map(item => ({ ...item }))
-        };
-
+        const recipeData = { name, servings, calories: cals, carbs, protein: pro, fat, fiber: fib, ingredients: recipeIngredients.map(item => ({ ...item })) };
         if (!STATE.recipes) STATE.recipes = [];
-        STATE.recipes.push(newRecipe);
+        if (editingRecipeId !== null) {
+            const index = STATE.recipes.findIndex(recipe => String(recipe.id) === String(editingRecipeId));
+            if (index >= 0) STATE.recipes[index] = { ...STATE.recipes[index], ...recipeData };
+            editingRecipeId = null;
+        } else {
+            STATE.recipes.push({ id: 'rec_' + Date.now().toString(), ...recipeData });
+        }
         saveLocalState();
         
         showNotification("Recipe saved successfully!", "success");
         document.getElementById('createRecipeForm').classList.add('hidden');
+        editingRecipeId = null;
         renderRecipesList();
         renderMealPlanner();
     }
